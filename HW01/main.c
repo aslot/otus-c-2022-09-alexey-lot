@@ -35,18 +35,15 @@
 
 // run over jpeg to find format signature
 #define JPEG_CYCLE(fp, FIRST_BYTE, SECOND_BYTE, eof_message) do {\
-	unsigned char first, second;\
-	\
-    while(true)\
+    do\
     {\
-    	first = fgetc(fp);\
-    	second = fgetc(fp);\
-    	\
-    	if (first == FIRST_BYTE and second == SECOND_BYTE)\
-    		break;\
-    	\
-    	FILE_CHECK(eof_message);\
+    	if (fgetc(fp) == FIRST_BYTE)\
+    		if (fgetc(fp) == SECOND_BYTE)\
+    			break;\
     }\
+    while(!feof(fp) and !ferror(fp));\
+    \
+    FILE_CHECK(eof_message);\
 }\
 while(0)
 			
