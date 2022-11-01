@@ -14,23 +14,25 @@
 // mappings between 8-bit characters of source encoding and 16-bit characters of utf-8 destination
 struct single_correspondence_table
 {
-	unsigned char source[MAX_N + 1]; 
-	wchar_t destination[MAX_N];
+	unsigned char source[MAX_N + 1];
 };
+
+unsigned char second_paragraph_separator_byte_utf8 = 0x20,
+			  first_paragraph_separator_byte_utf8 = 0x29;
 
 // possible input encodings
 enum source_encoding_type { KOI8_R, ISO_8859_5, CP_1251 }; // order important
 
-_Bool check_params(int params_count, char *params[])
+bool check_params(int params_count, char *params[])
 {
 	return (params_count == 4) and (params != NULL) and (params[1] != NULL) and (params[2] != NULL) and (params[3] != NULL);
 }
 
-_Bool translate_to_utf8(FILE *source, FILE *destination, enum source_encoding_type source_encoding)
+bool translate_to_utf8_and_write(FILE *source, FILE *destination, enum source_encoding_type source_encoding)
 {
 	struct single_correspondence_table table[] = {
-		{ // KOI8-R to UTF-8
-			.source = {      0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F,
+		{ // KOI8-R
+					  {      0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F,
 						     0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F,
 						     0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F,   
 						     0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F, 
@@ -44,26 +46,10 @@ _Bool translate_to_utf8(FILE *source, FILE *destination, enum source_encoding_ty
 						     0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA, 0xDB, 0xDC, 0xDD, 0xDE, 0xDF, 
 						     0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED, 0xEE, 0xEF, 
 						     0xF0, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFF,  
-						     /* null char */  0x00 },
-						     
-			.destination = { L' ',  L'!',  L'\"', L'#',  L'$',  L'%',  L'&',  L'\'', L'(',  L')',  L'*',  L'+',  L',',  L'-',  L'.',  L'/',
-							 L'0',  L'1',  L'2',  L'3',  L'4',  L'5',  L'6',  L'7',  L'8',  L'9',  L':',  L';',  L'<',  L'=',  L'>',  L'\?',
-							 L'@',  L'A',  L'B',  L'C',  L'D',  L'E',  L'F',  L'G',  L'H',  L'I',  L'J',  L'K',  L'L',  L'M',  L'N',  L'O',
-							 L'P',  L'Q',  L'R',  L'S',  L'T',  L'U',  L'V',  L'W',  L'X',  L'Y',  L'Z',  L'[',  L'\\', L']',  L'^',  L'_',
-							 L'`',  L'a',  L'b',  L'c',	 L'd',  L'e',  L'f',  L'g',  L'h',  L'i',  L'j',  L'k',  L'L',  L'm',  L'n',  L'o',
-							 L'p',  L'q',  L'r',  L's',  L't',  L'u',  L'v',  L'w',  L'x',  L'y',  L'z',  L'{',  L'|',  L'}',  L'~',
-							 L'─',  L'│',  L'┌',  L'┐',  L'└',  L'┘',  L'├',  L'┤',  L'┬',  L'┴',  L'┼',  L'▀',  L'▄',  L'█',  L'▌',  L'▐',
-							 L'░',  L'▒',  L'▓',  L'⌠',  L'■',  L'∙',  L'√',  L'≈',  L'≤',  L'≥',  L'\u00A0',  L'⌡',  L'°',  L'²',  L'·',  L'÷',
-							 L'═',  L'║',  L'╒',  L'ё',  L'╓',  L'╔',  L'╕',  L'╖',  L'╗',  L'╘',  L'╙',  L'╚',  L'╛',  L'╜',  L'╝',  L'╞',
-							 L'╟',  L'╠',  L'╡',  L'Ё',  L'╢',  L'╣',  L'╤',  L'╥',  L'╦',  L'╧',  L'╨',  L'╩',  L'╪',  L'╫',  L'╬',  L'©',
-							 L'ю',  L'а',  L'б',  L'ц',  L'д',  L'е',  L'ф',  L'г',  L'х',  L'и',  L'й',  L'к',  L'л',  L'м',  L'н',  L'о',
-							 L'п',  L'я',  L'р',  L'с',  L'т',  L'у',  L'ж',  L'в',  L'ь',  L'ы',  L'з',  L'ш',  L'э',  L'щ',  L'ч',  L'ъ',
-							 L'Ю',  L'А',  L'Б',  L'Ц',  L'Д',  L'Е',  L'Ф',  L'Г',  L'Х',  L'И',  L'Й',  L'К',  L'Л',  L'М',  L'Н',  L'О',
-							 L'П',  L'Я',  L'Р',  L'С',  L'Т',  L'У',  L'Ж',  L'В',  L'Ь',  L'Ы',  L'З',  L'Ш',  L'Э',  L'Щ',  L'Ч',  L'Ъ', 
-							 L'\u2029' /* paragraph separator */ }							 
+						     /* null char */  0x00 }						 
 		},
-		{ // ISO-8859-5 to UTF-8
-			.source = {		 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F,
+		{ // ISO-8859-5
+			       {		 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F,
 						     0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F,
 						     0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F,   
 						     0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F, 
@@ -75,24 +61,10 @@ _Bool translate_to_utf8(FILE *source, FILE *destination, enum source_encoding_ty
 						     0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA, 0xDB, 0xDC, 0xDD, 0xDE, 0xDF, 
 						     0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED, 0xEE, 0xEF, 
 						     0xF0, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFF,  
-						     0x00 },
-						     
-			.destination = { L' ',  L'!',  L'\"', L'#',  L'$',  L'%',  L'&',  L'\'', L'(',  L')',  L'*',  L'+',  L',',  L'-',  L'.',  L'/',
-							 L'0',  L'1',  L'2',  L'3',  L'4',  L'5',  L'6',  L'7',  L'8',  L'9',  L':',  L';',  L'<',  L'=',  L'>',  L'\?',
-							 L'@',  L'A',  L'B',  L'C',  L'D',  L'E',  L'F',  L'G',  L'H',  L'I',  L'J',  L'K',  L'L',  L'M',  L'N',  L'O',
-							 L'P',  L'Q',  L'R',  L'S',  L'T',  L'U',  L'V',  L'W',  L'X',  L'Y',  L'Z',  L'[',  L'\\', L']',  L'^',  L'_',
-							 L'`',  L'a',  L'b',  L'c',	 L'd',  L'e',  L'f',  L'g',  L'h',  L'i',  L'j',  L'k',  L'L',  L'm',  L'n',  L'o',
-							 L'p',  L'q',  L'r',  L's',  L't',  L'u',  L'v',  L'w',  L'x',  L'y',  L'z',  L'{',  L'|',  L'}',  L'~',
-							 L' ',  L'Ё',  L'Ђ',  L'Ѓ',  L'Є',  L'Ѕ',  L'І',  L'Ї',  L'Ј',  L'Љ',  L'Њ',  L'Ћ',  L'Ќ',         L'Ў',  L'Џ',
-							 L'А',  L'Б',  L'В',  L'Г',  L'Д',  L'Е',  L'Ж',  L'З',  L'И',  L'Й',  L'К',  L'Л',  L'М',  L'Н',  L'О',  L'П',
-							 L'Р',  L'С',  L'Т',  L'У',  L'Ф',  L'Х',  L'Ц',  L'Ч',  L'Ш',  L'Щ',  L'Ъ',  L'Ы',  L'Ь',  L'Э',  L'Ю',  L'Я',
-							 L'а',  L'б',  L'в',  L'г',  L'д',  L'е',  L'ж',  L'з',  L'и',  L'й',  L'к',  L'л',  L'м',  L'н',  L'о',  L'п',
-							 L'р',  L'с',  L'т',  L'у',  L'ф',  L'х',  L'ц',  L'ч',  L'ш',  L'щ',  L'ъ',  L'ы',  L'ь',  L'э',  L'ю',  L'я',
-							 L'№',  L'ё',  L'ђ',  L'ѓ',  L'є',  L'ѕ',  L'і',  L'ї',  L'ј',  L'љ',  L'њ',  L'ћ',  L'ќ',  L'§',  L'ў',  L'џ',
-							 L'\u2029' }
+						     0x00 }
 		},
-		{ // Windows-1251 to UTF-8
-			.source = {		 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F,
+		{ // Windows-1251
+			       {		 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F,
 						     0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F,
 						     0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F,   
 						     0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F, 
@@ -106,23 +78,7 @@ _Bool translate_to_utf8(FILE *source, FILE *destination, enum source_encoding_ty
 						     0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9, 0xDA, 0xDB, 0xDC, 0xDD, 0xDE, 0xDF, 
 						     0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED, 0xEE, 0xEF, 
 						     0xF0, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFF,  
-						     0x00 },		
-						     				     
-		    .destination =  { L' ',  L'!',  L'\"', L'#',  L'$',  L'%',  L'&',  L'\'', L'(',  L')',  L'*',  L'+',  L',',  L'-',  L'.',  L'/',
-							 L'0',  L'1',  L'2',  L'3',  L'4',  L'5',  L'6',  L'7',  L'8',  L'9',  L':',  L';',  L'<',  L'=',  L'>',  L'\?',
-							 L'@',  L'A',  L'B',  L'C',  L'D',  L'E',  L'F',  L'G',  L'H',  L'I',  L'J',  L'K',  L'L',  L'M',  L'N',  L'O',
-							 L'P',  L'Q',  L'R',  L'S',  L'T',  L'U',  L'V',  L'W',  L'X',  L'Y',  L'Z',  L'[',  L'\\', L']',  L'^',  L'_',
-							 L'`',  L'a',  L'b',  L'c',	 L'd',  L'e',  L'f',  L'g',  L'h',  L'i',  L'j',  L'k',  L'L',  L'm',  L'n',  L'o',
-							 L'p',  L'q',  L'r',  L's',  L't',  L'u',  L'v',  L'w',  L'x',  L'y',  L'z',  L'{',  L'|',  L'}',  L'~',
-							 L'Ђ',  L'Ѓ',  L'‚',  L'ѓ',  L'„',  L'…',  L'†',  L'‡',  L'€',  L'‰',  L'Љ',  L'‹',  L'Њ',  L'Ќ',  L'Ћ',  L'Џ',
-							 L'ђ',  L'‘',  L'’',  L'“',  L'”',  L'•',  L'–',  L'—',         L'™',  L'љ',  L'›',  L'њ',  L'ќ',  L'ћ',  L'џ',
-							 L' ',  L'Ў',  L'ў',  L'Ј',  L'¤',  L'Ґ',  L'¦',  L'§',  L'Ё',  L'©',  L'Є',  L'«',  L'¬',         L'®',  L'Ї',
-							 L'°',  L'±',  L'І',  L'і',  L'ґ',  L'µ',  L'¶',  L'·',  L'ё',  L'№',  L'є',  L'»',  L'ј',  L'Ѕ',  L'ѕ',  L'ї',
-							 L'А',  L'Б',  L'В',  L'Г',  L'Д',  L'Е',  L'Ж',  L'З',  L'И',  L'Й',  L'К',  L'Л',  L'М',  L'Н',  L'О',  L'П',
-							 L'Р',  L'С',  L'Т',  L'У',  L'Ф',  L'Х',  L'Ц',  L'Ч',  L'Ш',  L'Щ',  L'Ъ',  L'Ы',  L'Ь',  L'Э',  L'Ю',  L'Я',
-							 L'а',  L'б',  L'в',  L'г',  L'д',  L'е',  L'ж',  L'з',  L'и',  L'й',  L'к',  L'л',  L'м',  L'н',  L'о',  L'п',
-							 L'р',  L'с',  L'т',  L'у',  L'ф',  L'х',  L'ц',  L'ч',  L'ш',  L'щ',  L'ъ',  L'ы',  L'ь',  L'э',  L'ю',  L'я',
-							 L'\u2029' }
+						     0x00 }
 		}
 	}; 
 	
@@ -139,13 +95,30 @@ _Bool translate_to_utf8(FILE *source, FILE *destination, enum source_encoding_ty
 			break;
 		
 		counter = 0;
-		corresponding = table[source_encoding].source[counter];
+		corresponding = table[source_encoding].source[counter]; // start initialization
 	
 		// search for current character correspondence
 		while(current != corresponding and corresponding != 0)	
 			corresponding = table[source_encoding].source[++counter];		
-	
-		fputwc(table[source_encoding].destination[counter], destination);
+		
+		// then search line in first column of RFC 3629
+		if (corresponding == 0) // if not found or null byte terminator to the paragraph separator conversion
+		{
+			putc(second_paragraph_separator_byte_utf8, destination);
+			putc(first_paragraph_separator_byte_utf8, destination);
+		}
+		else if (corresponding > 0 and corresponding <= 0x7F) // ASCII
+			putc(corresponding, destination);
+		else // <= 0xFF 8-bit character set limit
+		{
+			// taking first four bits from source character using mask 0b00001111 (0xF)
+			// then putting them into first byte (high-order octet 0b11000000 (0xC0))			
+			putc(0xC0 ^ (0xF & corresponding), destination);
+						
+			// taking last four bits from source character using mask 0b11110000 (0xF0)	    
+			// then putting them into second byte (last octet 0b10000000 (0x80))
+			putc(0x80 ^ (0xF0 & corresponding), destination);		
+		}
 	}
 	
 	if (ferror(source))
@@ -180,7 +153,7 @@ int main(int params_count, char *params[])
     }
    	
    	enum source_encoding_type encoding_type;
-    char *encoding = params[2]; // pass with null terminator on Linux
+    char *encoding = params[2]; 
     
     if (strcmp(encoding, "koi8") == 0)
     	encoding_type = KOI8_R;
@@ -197,7 +170,7 @@ int main(int params_count, char *params[])
     	FAIL;
     }
 
-    _Bool result = translate_to_utf8(source, destination, encoding_type);
+    bool result = translate_to_utf8_and_write(source, destination, encoding_type);
     fclose(source);      		
     fflush(source);
     fclose(destination);
