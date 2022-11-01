@@ -111,9 +111,9 @@ bool translate_to_utf8_and_write(FILE *source, FILE *destination, enum source_en
 			putc(corresponding, destination);
 		else // <= 0xFF 8-bit character set limit
 		{
-			// taking first four bits from source character using mask 0b00001111 (0xF)
+			// taking first four bits from source character using mask 0b00001111 (0xF) and make offset
 			// then putting them into first byte (high-order octet 0b11000000 (0xC0))			
-			putc(0xC0 ^ (0xF & corresponding), destination);
+			putc(0xC0 ^ (0xF & corresponding) >> 4, destination);
 						
 			// taking last four bits from source character using mask 0b11110000 (0xF0)	    
 			// then putting them into second byte (last octet 0b10000000 (0x80))
