@@ -2,9 +2,8 @@
 #include <stdlib.h> 
 #include <stdbool.h>
 #include <iso646.h>
-#include <wchar.h>
 #include <string.h>
-#include <locale.h>
+#include <stdint.h>
 
 #define MAX_N 256 // 2^8 values without NUL as the end
 
@@ -14,10 +13,10 @@
 // mappings between 8-bit characters of source encoding and 16-bit characters of utf-8 destination
 struct single_correspondence_table
 {
-	unsigned char source[MAX_N + 1];
+	uint8_t source[MAX_N + 1];
 };
 
-unsigned char second_paragraph_separator_byte_utf8 = 0x20,
+uint8_t second_paragraph_separator_byte_utf8 = 0x20,
 			  first_paragraph_separator_byte_utf8 = 0x29;
 
 // possible input encodings
@@ -82,7 +81,7 @@ bool translate_to_utf8_and_write(FILE *source, FILE *destination, enum source_en
 		}
 	}; 
 	
-	unsigned char corresponding;
+	uint8_t corresponding, byte;
 	short counter = 0;
 	int current;
 	corresponding = table[source_encoding].source[counter];
@@ -104,20 +103,22 @@ bool translate_to_utf8_and_write(FILE *source, FILE *destination, enum source_en
 		// then search line in first column of RFC 3629
 		if (corresponding == 0) // if not found or null byte terminator to the paragraph separator conversion
 		{
-			putc(second_paragraph_separator_byte_utf8, destination);
-			putc(first_paragraph_separator_byte_utf8, destination);
+			fwrite(&second_paragraph_separator_byte_utf8, sizeof(uint8_t), 1, destination);
+			fwrite(&first_paragraph_separator_byte_utf8, sizeof(uint8_t), 1, destination);
 		}
 		else if (corresponding > 0 and corresponding <= 0x7F) // ASCII
-			putc(corresponding, destination);
+			fwrite(&corresponding, sizeof(uint8_t), 1, destination);
 		else // <= 0xFF 8-bit character set limit
 		{
 			// taking first four bits from source character using mask 0b00001111 (0xF) and make offset
 			// then putting them into first byte (high-order octet 0b11000000 (0xC0))			
-			putc(0xC0 ^ (0xF & corresponding) >> 4, destination);
+			byte = 0xC0 | (0xF & corresponding) >> 4;
+			fwrite(&byte, sizeof(uint8_t), 1, destination);
 						
 			// taking last four bits from source character using mask 0b11110000 (0xF0)	    
 			// then putting them into second byte (last octet 0b10000000 (0x80))
-			putc(0x80 ^ (0xF0 & corresponding), destination);		
+			byte = 0x80 | (0xF0 & corresponding);
+			fwrite(&byte, sizeof(uint8_t), 1, destination);		
 		}
 	}
 	
@@ -128,9 +129,7 @@ bool translate_to_utf8_and_write(FILE *source, FILE *destination, enum source_en
 }
 
 int main(int params_count, char *params[])
-{		
-	setlocale(LC_ALL, "ru_RU.utf8");
-	
+{			
     if (!check_params(params_count, params))
     	FAIL;
     
