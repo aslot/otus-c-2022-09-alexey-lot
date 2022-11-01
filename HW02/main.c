@@ -80,7 +80,7 @@ bool translate_to_utf8_and_write(FILE *source, FILE *destination, enum source_en
 		}
 	}; 
 	
-	uint8_t corresponding, byte;
+	uint8_t corresponding;
 	uint16_t double_byte;
 	short counter = 0;
 	int current;
@@ -113,7 +113,7 @@ bool translate_to_utf8_and_write(FILE *source, FILE *destination, enum source_en
 			// then putting them into second byte (high-order octet of 0b11000000_00000000 (0xC000))	
 			// and taking first four bits from source character using mask 0b00001111 (0x0F)	    
 			// then putting them into first byte (after preparing first octet (0x80) of 0b11000000_10000000)		
-			double_byte = ((0xC000 ^ (0xF0 & corresponding) << 4) & 0x80) ^ (0x0F & corresponding);		
+			double_byte = ((0xC000 ^ (0xF0 & corresponding) << 4) & 0x80) ^ (0x0F & corresponding);	
 			fwrite(&double_byte, sizeof(uint16_t), 1, destination);		
 		}
 	}
