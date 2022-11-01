@@ -16,8 +16,7 @@ struct single_correspondence_table
 	uint8_t source[MAX_N + 1];
 };
 
-uint8_t second_paragraph_separator_byte_utf8 = 0x20,
-			  first_paragraph_separator_byte_utf8 = 0x29;
+uint16_t paragraph_separator_utf8 = 0x2029;
 
 // possible input encodings
 enum source_encoding_type { KOI8_R, ISO_8859_5, CP_1251 }; // order important
@@ -82,6 +81,7 @@ bool translate_to_utf8_and_write(FILE *source, FILE *destination, enum source_en
 	}; 
 	
 	uint8_t corresponding, byte;
+	uint16_t double_byte;
 	short counter = 0;
 	int current;
 	corresponding = table[source_encoding].source[counter];
@@ -103,22 +103,18 @@ bool translate_to_utf8_and_write(FILE *source, FILE *destination, enum source_en
 		// then search line in first column of RFC 3629
 		if (corresponding == 0) // if not found or null byte terminator to the paragraph separator conversion
 		{
-			fwrite(&second_paragraph_separator_byte_utf8, sizeof(uint8_t), 1, destination);
-			fwrite(&first_paragraph_separator_byte_utf8, sizeof(uint8_t), 1, destination);
+			fwrite(&paragraph_separator_utf8, sizeof(uint16_t), 1, destination);
 		}
 		else if (corresponding > 0 and corresponding <= 0x7F) // ASCII
 			fwrite(&corresponding, sizeof(uint8_t), 1, destination);
 		else // <= 0xFF 8-bit character set limit
 		{
-			// taking first four bits from source character using mask 0b00001111 (0xF) and make offset
-			// then putting them into first byte (high-order octet 0b11000000 (0xC0))			
-			byte = 0xC0 | (0xF & corresponding) >> 4;
-			fwrite(&byte, sizeof(uint8_t), 1, destination);
-						
-			// taking last four bits from source character using mask 0b11110000 (0xF0)	    
-			// then putting them into second byte (last octet 0b10000000 (0x80))
-			byte = 0x80 | (0xF0 & corresponding);
-			fwrite(&byte, sizeof(uint8_t), 1, destination);		
+			// taking last four bits from source character using mask 0b11110000 (0xF0) and making offset
+			// then putting them into second byte (high-order octet of 0b11000000_00000000 (0xC000))	
+			// and taking first four bits from source character using mask 0b00001111 (0x0F)	    
+			// then putting them into first byte (after preparing first octet (0x80) of 0b11000000_10000000)		
+			double_byte = ((0xC000 ^ (0xF0 & corresponding) << 4) & 0x80) ^ (0x0F & corresponding);		
+			fwrite(&double_byte, sizeof(uint16_t), 1, destination);		
 		}
 	}
 	
